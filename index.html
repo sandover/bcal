@@ -138,9 +138,11 @@
         }
 
         function getEventType(summary) {
-            const lower = summary.toLowerCase().trim();
-            if (lower === 'b kids') return 'b-kids';
-            if (lower === 's kids') return 's-kids';
+            const lower = summary.toLowerCase();
+            // Match anything containing "b kid" (with or without 's')
+            if (lower.includes('b kid')) return 'b-kids';
+            // Match anything containing "s kid" (with or without 's')
+            if (lower.includes('s kid')) return 's-kids';
             return null;
         }
 
