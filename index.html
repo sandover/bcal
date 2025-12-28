@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kids Calendar</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            padding: 40px 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .error {
+            background: #fee;
+            border: 1px solid #fcc;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .controls button {
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .controls button:hover {
+            background: #e0e0e0;
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 30px;
+        }
+
+        .calendar {
+            border: 1px solid #ddd;
+        }
+
+        .calendar-header {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            background: #fff;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .day-name {
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+        }
+
+        .day-cell {
+            aspect-ratio: 1.3;
+            border: 1px solid #ddd;
+            padding: 12px;
+            font-size: 24px;
+            font-weight: 500;
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-start;
+            background: white;
+        }
+
+        .day-cell.empty {
+            background: #fafafa;
+        }
+
+        .day-cell.b-kids {
+            background: #5B7FC6;
+            color: #000;
+        }
+
+        .day-cell.s-kids {
+            background: #7EAE5B;
+            color: #000;
+        }
+
+        .legend {
+            margin-top: 20px;
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 20px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script>
+        let currentDate = new Date();
+        let events = [];
+
+        function isSameDay(date1, date2) {
+            if (!date1 || !date2) return false;
+            const d1 = typeof date1 === 'string' ? new Date(date1) : date1;
+            const d2 = typeof date2 === 'string' ? new Date(date2) : date2;
+            return d1.getDate() === d2.getDate() &&
+                   d1.getMonth() === d2.getMonth() &&
+                   d1.getFullYear() === d2.getFullYear();
+        }
+
+        function getEventType(summary) {
+            const lower = summary.toLowerCase().trim();
+            if (lower === 'b kids') return 'b-kids';
+            if (lower === 's kids') return 's-kids';
+            return null;
+        }
+
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startingDayOfWeek = firstDay.getDay();
+            const daysInMonth = lastDay.getDate();
+
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                              'July', 'August', 'September', 'October', 'November', 'December'];
+
+            let html = `
+                <div class="controls">
+                    <button onclick="changeMonth(-1)">← Previous</button>
+                    <span></span>
+                    <button onclick="changeMonth(1)">Next →</button>
+                </div>
+                <h1>${monthNames[month]} ${year}</h1>
+                <div class="calendar">
+                    <div class="calendar-header">
+                        <div class="day-name">Su</div>
+                        <div class="day-name">M</div>
+                        <div class="day-name">T</div>
+                        <div class="day-name">W</div>
+                        <div class="day-name">Th</div>
+                        <div class="day-name">F</div>
+                        <div class="day-name">S</div>
+                    </div>
+                    <div class="calendar-grid">
+            `;
+
+            // Empty cells before first day
+            for (let i = 0; i < startingDayOfWeek; i++) {
+                html += '<div class="day-cell empty"></div>';
+            }
+
+            // Days of the month
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                let cssClass = 'day-cell';
+
+                // Check for events on this day
+                for (const event of events) {
+                    if (event.dtstart && isSameDay(event.dtstart, date)) {
+                        const eventType = getEventType(event.summary);
+                        if (eventType) {
+                            cssClass += ` ${eventType}`;
+                            break; // Only apply first matching event type
+                        }
+                    }
+                }
+
+                html += `<div class="${cssClass}">${day}</div>`;
+            }
+
+            html += `
+                    </div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #5B7FC6;"></div>
+                        <span>B Kids</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #7EAE5B;"></div>
+                        <span>S Kids</span>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('app').innerHTML = html;
+        }
+
+        function changeMonth(delta) {
+            currentDate.setMonth(currentDate.getMonth() + delta);
+            renderCalendar();
+        }
+
+        async function loadCalendar() {
+            try {
+                const response = await fetch('calendar.json');
+                if (!response.ok) {
+                    throw new Error(`Calendar data not found. The GitHub Action may not have run yet.`);
+                }
+
+                const data = await response.json();
+                events = data.events || [];
+
+                renderCalendar();
+            } catch (error) {
+                document.getElementById('app').innerHTML = `
+                    <div class="error">
+                        <h2>Error Loading Calendar</h2>
+                        <p>${error.message}</p>
+                        <p style="margin-top: 10px;">Make sure the GitHub Action has run at least once to generate calendar.json</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Initialize
+        loadCalendar();
+    </script>
+</body>
+</html>
