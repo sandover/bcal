@@ -126,6 +126,64 @@
             font-size: 13px;
             color: #666;
         }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            body {
+                padding: 20px 10px;
+            }
+
+            h1 {
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+
+            .controls button {
+                padding: 10px 14px;
+                font-size: 13px;
+                touch-action: manipulation;
+            }
+
+            .day-name {
+                padding: 8px 4px;
+                font-size: 12px;
+            }
+
+            .day-cell {
+                padding: 6px 4px;
+                font-size: 18px;
+            }
+
+            .legend {
+                flex-direction: column;
+                gap: 10px;
+                font-size: 13px;
+            }
+
+            .last-updated {
+                font-size: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 20px;
+            }
+
+            .day-name {
+                font-size: 11px;
+            }
+
+            .day-cell {
+                padding: 4px 2px;
+                font-size: 16px;
+            }
+
+            .controls button {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+        }
     </style>
 </head>
 <body>
