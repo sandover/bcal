@@ -2,8 +2,8 @@ name: Update Calendar Data
 
 on:
   schedule:
-    # Run every hour
-    - cron: '0 * * * *'
+    # Run once daily at 6am UTC
+    - cron: '0 6 * * *'
   workflow_dispatch: # Allow manual trigger
   push:
     branches: [main]

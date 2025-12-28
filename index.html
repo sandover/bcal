@@ -119,6 +119,12 @@
             height: 20px;
             border: 1px solid #ddd;
         }
+
+        .last-updated {
+            margin-top: 15px;
+            font-size: 13px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -127,6 +133,7 @@
     <script>
         let currentDate = new Date();
         let events = [];
+        let lastUpdated = null;
 
         function isSameDay(date1, date2) {
             if (!date1 || !date2) return false;
@@ -144,6 +151,24 @@
             // Match anything containing "s kid" (with or without 's')
             if (lower.includes('s kid')) return 's-kids';
             return null;
+        }
+
+        function formatLastUpdated(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const diffDays = Math.floor(diffHours / 24);
+
+            if (diffHours < 1) {
+                return 'just now';
+            } else if (diffHours < 24) {
+                return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+            } else if (diffDays < 7) {
+                return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+            } else {
+                return date.toLocaleDateString();
+            }
         }
 
         function renderCalendar() {
@@ -215,6 +240,7 @@
                         <span>S Kids</span>
                     </div>
                 </div>
+                ${lastUpdated ? `<div class="last-updated">Last updated: ${formatLastUpdated(lastUpdated)}</div>` : ''}
             `;
 
             document.getElementById('app').innerHTML = html;
@@ -234,6 +260,7 @@
 
                 const data = await response.json();
                 events = data.events || [];
+                lastUpdated = data.updated || null;
 
                 renderCalendar();
             } catch (error) {
