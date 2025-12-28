@@ -148,9 +148,9 @@
         function getEventType(summary) {
             const lower = summary.toLowerCase();
             // Match anything containing "b kid" (with or without 's')
-            if (lower.includes('b kid')) return 'b-kids';
+            if (lower.includes('b kid')) return 's-kids';
             // Match anything containing "s kid" (with or without 's')
-            if (lower.includes('s kid')) return 's-kids';
+            if (lower.includes('s kid')) return 'b-kids';
             return null;
         }
 
