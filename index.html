@@ -215,11 +215,17 @@
 
                 // Check for events on this day
                 for (const event of events) {
-                    if (event.dtstart && isSameDay(event.dtstart, date)) {
-                        const eventType = getEventType(event.summary);
-                        if (eventType) {
-                            cssClass += ` ${eventType}`;
-                            break; // Only apply first matching event type
+                    if (event.dtstart) {
+                        const startDate = typeof event.dtstart === 'string' ? new Date(event.dtstart) : event.dtstart;
+                        const endDate = event.dtend ? (typeof event.dtend === 'string' ? new Date(event.dtend) : event.dtend) : startDate;
+
+                        // Check if date falls within event range (inclusive)
+                        if (date >= startDate && date <= endDate) {
+                            const eventType = getEventType(event.summary);
+                            if (eventType) {
+                                cssClass += ` ${eventType}`;
+                                break; // Only apply first matching event type
+                            }
                         }
                     }
                 }
