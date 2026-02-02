@@ -6,7 +6,7 @@ A single-file HTML calendar viewer that displays Google Calendar events filtered
 
 - Automatically fetches events from your Google Calendar (via private iCal URL)
 - Filters for events titled "b kids" (blue) or "s kids" (green)
-- Displays a monthly calendar grid with colored days
+- Displays a 3-month stacked calendar grid with colored days
 - Updates automatically every hour via GitHub Actions
 
 ## Setup
@@ -72,7 +72,8 @@ Bookmark this URL for easy access!
 
 ## Usage
 
-- **Navigate months**: Use the ← Previous / Next → buttons
+- **Navigate months**: Use the ↑ Previous month / ↓ Next month buttons to slide the stack
+- **Jump to current**: Use **Today** to return to the current month
 - **Auto-updates**: Calendar data refreshes every hour automatically
 - **Manual refresh**: Go to Actions tab and manually run the workflow for immediate updates
 

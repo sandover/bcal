@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!--
+      Purpose: Render a lightweight, scrollable calendar view with stacked months.
+      Exports: None (single-file HTML with inline JS).
+      Role: Primary UI entry point for the personal calendar viewer.
+      Invariants: Months render in a 3-stack; navigation anchors to month headers.
+    -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
@@ -27,14 +33,11 @@
             margin-bottom: 20px;
         }
 
-        .controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
+        .header {
+            margin-bottom: 20px;
         }
 
-        .controls button {
+        .button {
             background: #f0f0f0;
             border: 1px solid #ccc;
             padding: 8px 16px;
@@ -43,8 +46,14 @@
             font-size: 14px;
         }
 
-        .controls button:hover {
+        .button:hover {
             background: #e0e0e0;
+        }
+
+        .stack-button {
+            width: 100%;
+            margin: 12px 0;
+            font-size: 15px;
         }
 
         h1 {
@@ -53,8 +62,33 @@
             margin-bottom: 30px;
         }
 
-        .calendar {
+        .month-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .month {
             border: 1px solid #ddd;
+            border-radius: 6px;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .month-header {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: #fff;
+            padding: 12px 16px;
+            font-size: 20px;
+            font-weight: 600;
+            border-bottom: 1px solid #ddd;
+            scroll-margin-top: 8px;
+        }
+
+        .calendar {
+            border: none;
         }
 
         .calendar-header {
@@ -138,7 +172,7 @@
                 margin-bottom: 20px;
             }
 
-            .controls button {
+            .button {
                 padding: 10px 14px;
                 font-size: 13px;
                 touch-action: manipulation;
@@ -179,7 +213,7 @@
                 font-size: 16px;
             }
 
-            .controls button {
+            .button {
                 padding: 8px 12px;
                 font-size: 12px;
             }
@@ -190,7 +224,12 @@
     <div id="app"></div>
 
     <script>
-        let currentDate = new Date();
+        const MONTH_STACK_SIZE = 3;
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                          'July', 'August', 'September', 'October', 'November', 'December'];
+        const dayNames = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
+
+        let currentDate = startOfMonth(new Date());
         let events = [];
         let lastUpdated = null;
 
@@ -230,36 +269,42 @@
             }
         }
 
-        function renderCalendar() {
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
+        function startOfMonth(date) {
+            return new Date(date.getFullYear(), date.getMonth(), 1);
+        }
 
+        function addMonths(date, delta) {
+            return new Date(date.getFullYear(), date.getMonth() + delta, 1);
+        }
+
+        function getMonthKey(date) {
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            return `${date.getFullYear()}-${month}`;
+        }
+
+        function getStackStartDate(focusDate) {
+            return startOfMonth(focusDate);
+        }
+
+        function buildMonthSection(monthDate) {
+            const year = monthDate.getFullYear();
+            const month = monthDate.getMonth();
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
             const startingDayOfWeek = firstDay.getDay();
             const daysInMonth = lastDay.getDate();
-
-            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-                              'July', 'August', 'September', 'October', 'November', 'December'];
+            const monthKey = getMonthKey(monthDate);
 
             let html = `
-                <div class="controls">
-                    <button onclick="changeMonth(-1)">← Previous</button>
-                    <span></span>
-                    <button onclick="changeMonth(1)">Next →</button>
-                </div>
-                <h1>${monthNames[month]} ${year}</h1>
-                <div class="calendar">
-                    <div class="calendar-header">
-                        <div class="day-name">Su</div>
-                        <div class="day-name">M</div>
-                        <div class="day-name">T</div>
-                        <div class="day-name">W</div>
-                        <div class="day-name">Th</div>
-                        <div class="day-name">F</div>
-                        <div class="day-name">S</div>
+                <section class="month">
+                    <div class="month-header" data-month-key="${monthKey}">
+                        ${monthNames[month]} ${year}
                     </div>
-                    <div class="calendar-grid">
+                    <div class="calendar">
+                        <div class="calendar-header">
+                            ${dayNames.map((day) => `<div class="day-name">${day}</div>`).join('')}
+                        </div>
+                        <div class="calendar-grid">
             `;
 
             // Empty cells before first day
@@ -293,8 +338,39 @@
             }
 
             html += `
+                        </div>
                     </div>
+                </section>
+            `;
+
+            return html;
+        }
+
+        function scrollToMonthKey(monthKey, behavior = 'auto') {
+            const header = document.querySelector(`.month-header[data-month-key="${monthKey}"]`);
+            if (!header) return;
+            header.scrollIntoView({ behavior, block: 'start' });
+        }
+
+        function scrollToPosition(positionY, behavior = 'auto') {
+            window.scrollTo({ top: positionY, behavior });
+        }
+
+        function scrollToBottom(behavior = 'auto') {
+            const bottom = document.documentElement.scrollHeight;
+            window.scrollTo({ top: bottom, behavior });
+        }
+
+        function renderCalendar({ scrollKey, scrollBehavior = 'auto', scrollPosition, scrollToEnd = false } = {}) {
+            const stackStart = getStackStartDate(currentDate);
+            const months = Array.from({ length: MONTH_STACK_SIZE }, (_, index) =>
+                addMonths(stackStart, index)
+            );
+
+            let html = `
+                <div class="header">
                 </div>
+                <h1>Kids Calendar</h1>
                 <div class="legend">
                     <div class="legend-item">
                         <div class="legend-color" style="background: #5B7FC6;"></div>
@@ -305,15 +381,46 @@
                         <span>with BH</span>
                     </div>
                 </div>
+                <button class="button stack-button" onclick="changeMonth(-1, 'preserve')">↑ Previous month</button>
+                <div class="month-stack">
+                    ${months.map(buildMonthSection).join('')}
+                </div>
+                <button class="button stack-button" onclick="changeMonth(1, 'bottom')">↓ Next month</button>
                 ${lastUpdated ? `<div class="last-updated">Last updated: ${formatLastUpdated(lastUpdated)}</div>` : ''}
             `;
 
             document.getElementById('app').innerHTML = html;
+            requestAnimationFrame(() => {
+                if (scrollToEnd) {
+                    scrollToBottom(scrollBehavior);
+                    return;
+                }
+                if (typeof scrollPosition === 'number') {
+                    scrollToPosition(scrollPosition, scrollBehavior);
+                    return;
+                }
+                const targetKey = scrollKey || getMonthKey(currentDate);
+                scrollToMonthKey(targetKey, scrollBehavior);
+            });
         }
 
-        function changeMonth(delta) {
-            currentDate.setMonth(currentDate.getMonth() + delta);
-            renderCalendar();
+        function changeMonth(delta, scrollMode = 'anchor') {
+            const currentScroll = window.scrollY;
+            currentDate = addMonths(currentDate, delta);
+            if (scrollMode === 'preserve') {
+                renderCalendar({ scrollBehavior: 'auto', scrollPosition: currentScroll });
+                return;
+            }
+            if (scrollMode === 'bottom') {
+                renderCalendar({ scrollBehavior: 'auto', scrollToEnd: true });
+                return;
+            }
+            renderCalendar({ scrollKey: getMonthKey(currentDate), scrollBehavior: 'smooth' });
+        }
+
+        function goToToday() {
+            currentDate = startOfMonth(new Date());
+            renderCalendar({ scrollKey: getMonthKey(currentDate), scrollBehavior: 'smooth' });
         }
 
         async function loadCalendar() {
